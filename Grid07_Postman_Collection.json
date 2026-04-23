@@ -1,0 +1,263 @@
+{
+  "info": {
+    "name": "Grid07 - Backend Intern Assignment",
+    "description": "Postman collection for the Spring Boot microservice assignment.\n\nPhases covered:\n- Phase 1: Core REST endpoints (Users, Bots, Posts, Comments, Likes)\n- Phase 2: Redis Virality Engine & Atomic Locks\n- Phase 3: Notification Engine\n- Phase 4: Edge Case / Concurrency Testing\n\nBase URL: http://localhost:8080",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Phase 1 - Setup (Users & Bots)",
+      "item": [
+        {
+          "name": "Create User (Premium)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"diya_user\",\n  \"isPremium\": true\n}"
+            }
+          },
+          "response": [],
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "Create User (Free)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"human_user_2\",\n  \"isPremium\": false\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Bot",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/bots", "host": ["{{baseUrl}}"], "path": ["api", "bots"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alpha Bot\",\n  \"personaDescription\": \"A friendly AI assistant that replies to posts.\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Bot 2",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/bots", "host": ["{{baseUrl}}"], "path": ["api", "bots"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Beta Bot\",\n  \"personaDescription\": \"A second bot for cooldown testing.\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 1 - Core REST Endpoints",
+      "item": [
+        {
+          "name": "Create Post (by Human User)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts", "host": ["{{baseUrl}}"], "path": ["api", "posts"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"USER\",\n  \"content\": \"Hello world! This is my first post.\"\n}"
+            },
+            "description": "Creates a new post authored by User with ID=1. Change authorId to match your actual user ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Post (by Bot)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts", "host": ["{{baseUrl}}"], "path": ["api", "posts"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"BOT\",\n  \"content\": \"I am a bot and I just created a post.\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Human Comment to Post",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "posts", "1", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"USER\",\n  \"content\": \"Great post! Really loved it.\",\n  \"depthLevel\": 1\n}"
+            },
+            "description": "Adds a human comment. This gives +50 virality points. Change postId in URL as needed."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Bot Comment to Post (Valid)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "posts", "1", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"BOT\",\n  \"content\": \"Hello from Alpha Bot! Nice post.\",\n  \"depthLevel\": 2\n}"
+            },
+            "description": "Bot comment. Triggers guardrail checks: horizontal cap, vertical cap, and cooldown check."
+          },
+          "response": []
+        },
+        {
+          "name": "Like a Post (Human)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/1/like?userId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "1", "like"],
+              "query": [{ "key": "userId", "value": "1" }]
+            },
+            "description": "Likes post ID=1 by User ID=1. Gives +20 virality points."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 - Guardrail Tests",
+      "item": [
+        {
+          "name": "[GUARDRAIL] Vertical Cap - Depth > 20 (Expect 429)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "posts", "1", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"BOT\",\n  \"content\": \"This comment is too deep in the thread.\",\n  \"depthLevel\": 21\n}"
+            },
+            "description": "Should return 429 because depthLevel=21 exceeds the max allowed depth of 20."
+          },
+          "response": []
+        },
+        {
+          "name": "[GUARDRAIL] Cooldown Cap - Same Bot + Human Within 10 Min (Expect 429)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "posts", "1", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 1,\n  \"authorType\": \"BOT\",\n  \"content\": \"Bot trying to reply again too quickly.\",\n  \"depthLevel\": 2\n}"
+            },
+            "description": "Run 'Add Bot Comment' first, then run this IMMEDIATELY. Should return 429 - cooldown active."
+          },
+          "response": []
+        },
+        {
+          "name": "[GUARDRAIL] Horizontal Cap - 101st Bot Comment (Expect 429)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "posts", "1", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 2,\n  \"authorType\": \"BOT\",\n  \"content\": \"This is the 101st bot comment - should be blocked.\",\n  \"depthLevel\": 1\n}"
+            },
+            "description": "Use this after 100 bot comments are already added. Should return 429 - horizontal cap exceeded."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 - Notification Engine",
+      "item": [
+        {
+          "name": "Trigger Bot Interaction (1st - Sends Immediately)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "posts", "1", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 2,\n  \"authorType\": \"BOT\",\n  \"content\": \"First bot reply - notification sent immediately to user.\",\n  \"depthLevel\": 1\n}"
+            },
+            "description": "First bot interaction. Since no recent notification exists, it logs 'Push Notification Sent to User' in the console and sets a 15-min cooldown."
+          },
+          "response": []
+        },
+        {
+          "name": "Trigger Bot Interaction (2nd - Goes to Queue)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/posts/1/comments", "host": ["{{baseUrl}}"], "path": ["api", "posts", "1", "comments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": 3,\n  \"authorType\": \"BOT\",\n  \"content\": \"Second bot reply - should be queued in Redis list.\",\n  \"depthLevel\": 1\n}"
+            },
+            "description": "Second bot interaction within 15 mins. Should push to user pending_notifs Redis list. Check console - no immediate log."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 - Virality Score",
+      "item": [
+        {
+          "name": "Check Virality Score (via Redis CLI simulation)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/1/virality",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "1", "virality"]
+            },
+            "description": "Optional endpoint to expose virality score. If not implemented, check via Redis CLI:\n  docker exec -it grid07_redis redis-cli GET post:1:virality_score"
+          },
+          "response": []
+        },
+        {
+          "name": "Like Post (Virality +20)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/1/like?userId=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "1", "like"],
+              "query": [{ "key": "userId", "value": "2" }]
+            },
+            "description": "Adds +20 virality. Run multiple times with different userIds."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
